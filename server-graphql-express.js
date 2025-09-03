@@ -6,6 +6,7 @@ import { Book } from "./models/Book.js";
 
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@as-integrations/express5";
+import { Query } from "mongoose";
 
 dotenv.config();
 
@@ -13,26 +14,56 @@ const app = express();
 
 app.use(express.json());
 
-const typeDefs = /* GraphQL */`
-    type Book {
-        id: ID!,
-        title: String!,
-        author: String!,
-        genre: String!,
-    }
+const typeDefs = /* GraphQL */ `
+	type Book {
+		id: ID!
+		title: String!
+		genre: String!
+	}
 
-    type Query {
-        books(author: String, genre:String): [Book!]!
-        book(id:ID!): Book
-    }
+	type Query {
+		books(author: String, genre: String): [Book!]!
+		book(id: ID!): Book
+	}
 
-`
+	input CreateBookInput {
+		title: String!
+		author: String!
+		genre: String!
+	}
+
+	type Mutation {
+		createBook(input: CreateBookInput!): Book!
+	}
+`;
+
+const resolvers = {
+	Query: {
+		books: async (_parent, args) => {
+			const filter = {};
+			if (args.author) filter.author = new RegExp(args.author, "i");
+			if (args.genre) filter.genre = new RegExp(args.genre, "i");
+			return Book.find(filter);
+		},
+		book: async (_parent, { id }) => Book.findById(id),
+	},
+	Mutation: {
+		createBook: async (_parent, { input }) => {
+			Book.create(input);
+		},
+	},
+};
+
 // GET /books?author=Astrid
-const apollo = new ApolloServer{/*typedefs och resolvers*/}
+const apollo = new ApolloServer({ typeDefs, resolvers });
+await apollo.start();
 
-app.use("/graphql", expressMiddleware(apollo, {
-    context: async () => ({}),
-}))
+app.use(
+	"/graphql",
+	expressMiddleware(apollo, {
+		context: async () => ({}),
+	})
+);
 
 app.get("/books", async (req, res) => {
 	try {
