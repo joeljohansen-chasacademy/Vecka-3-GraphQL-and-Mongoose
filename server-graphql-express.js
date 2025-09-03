@@ -3,60 +3,20 @@ import express from "express";
 import dotenv from "dotenv";
 import { connectDB } from "./db.js";
 import { Book } from "./models/Book.js";
-
+import cors from "cors";
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@as-integrations/express5";
-import { Query } from "mongoose";
+import { typedefs } from "./graphql/typedefs.js";
+import { resolvers } from "./graphql/resolvers.js";
 
 dotenv.config();
 
 const app = express();
 
+app.use(cors());
 app.use(express.json());
 
-const typeDefs = /* GraphQL */ `
-	type Book {
-		id: ID!
-		title: String!
-		genre: String!
-	}
-
-	type Query {
-		books(author: String, genre: String): [Book!]!
-		book(id: ID!): Book
-	}
-
-	input CreateBookInput {
-		title: String!
-		author: String!
-		genre: String!
-	}
-
-	type Mutation {
-		createBook(input: CreateBookInput!): Book!
-	}
-`;
-
-const resolvers = {
-	Query: {
-		books: async (_parent, args) => {
-			const filter = {};
-			if (args.author) filter.author = new RegExp(args.author, "i");
-			if (args.genre) filter.genre = new RegExp(args.genre, "i");
-			return Book.find(filter);
-		},
-		book: async (_parent, { id }) => Book.findById(id),
-	},
-	Mutation: {
-		createBook: async (_parent, { input }) => {
-			//Hade glömt att göra en return här..
-			return Book.create(input);
-		},
-	},
-};
-
-// GET /books?author=Astrid
-const apollo = new ApolloServer({ typeDefs, resolvers });
+const apollo = new ApolloServer({ typedefs, resolvers });
 await apollo.start();
 
 app.use(
@@ -74,16 +34,6 @@ app.get("/books", async (req, res) => {
 		res.status(500).json({ error: "Failed to fetch books" });
 	}
 });
-/* 
-app.get("/books/:id", async (req, res) => {
-
-	try {
-		const books = await Book.findById(id);
-		res.json(books);
-	} catch (error) {
-		res.status(500).json({ error: "Failed to fetch books" });
-	}
-}); */
 
 app.post("/books", async (req, res) => {
 	try {
