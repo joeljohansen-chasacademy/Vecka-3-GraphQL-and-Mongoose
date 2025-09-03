@@ -49,7 +49,8 @@ const resolvers = {
 	},
 	Mutation: {
 		createBook: async (_parent, { input }) => {
-			Book.create(input);
+			//Hade glömt att göra en return här..
+			return Book.create(input);
 		},
 	},
 };
