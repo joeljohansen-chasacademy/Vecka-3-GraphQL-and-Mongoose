@@ -18,6 +18,6 @@ export const typeDefs = /* GraphQL */ `
 	}
 
 	type Mutation {
-		createBook(input: CreateBookInput!): Book!
+		createBook(input: CreateBookInput!): Book
 	}
 `;

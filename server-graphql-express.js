@@ -6,7 +6,7 @@ import { Book } from "./models/Book.js";
 import cors from "cors";
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@as-integrations/express5";
-import { typedefs } from "./graphql/typedefs.js";
+import { typeDefs } from "./graphql/typedefs.js";
 import { resolvers } from "./graphql/resolvers.js";
 
 dotenv.config();
@@ -16,7 +16,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const apollo = new ApolloServer({ typedefs, resolvers });
+const apollo = new ApolloServer({ typeDefs, resolvers });
 await apollo.start();
 
 app.use(
